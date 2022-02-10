@@ -1,10 +1,8 @@
-from signal import signal, SIGTERM, SIGHUP, pause
+from signal import signal, SIGTERM, SIGHUP
 from rpi_lcd import LCD
-from time import sleep
 import asyncio
 from json.decoder import JSONDecoder
 from paho.mqtt import subscribe
-from paho.mqtt.client import MQTTMessage
 
 def safe_exit(signum, frame):
     exit(1)
@@ -30,13 +28,10 @@ class Display:
         print(f"callback from topic {message.topic}")
         if message.topic == self.topic_date_time:
             self.line1 = str(bytes.decode(message.payload))
-            print(self.line1)
         if message.topic == self.topic_hum:
             self.hum = JSONDecoder().decode(bytes.decode(message.payload))["hum"]
-            print(self.hum)
         if message.topic == self.topic_temp:
             self.temp = JSONDecoder().decode(bytes.decode(message.payload))["temp"]
-            print(self.temp)
         if self.hum is not None and self.temp is not None:
             self.line2 = f"{self.temp} C Hum:{self.hum}%"
         if self.line1 is not None and self.line2 is not None:
@@ -48,19 +43,8 @@ class Display:
         signal(SIGHUP, safe_exit)
         self.lcd.text(">>Init sensor!<<", 1)
         self.lcd.text("......wait......", 2)
-        sleep(1)
         while True:
             await self.query_data()
             
 if __name__ == "__main__":
     asyncio.run(Display().run())
-    lcd.text("....shutdown....", 1)
-    lcd.text("......bye!......", 2)
-    sleep(1)
-    signal(SIGTERM, safe_exit)
-    signal(SIGHUP, safe_exit)
-    lcd.clear()
-
-
-
-
